@@ -2,9 +2,14 @@
 
 from sqlalchemy import Column, Integer, String, Float, Text, DateTime, Boolean
 from sqlalchemy.ext.declarative import declarative_base
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 
 Base = declarative_base()
+
+def get_wib_time():
+    # Mengambil waktu saat ini di zona waktu WIB (UTC+7)
+    # Menghapus tzinfo agar kompatibel (naive datetime) dengan SQLite
+    return datetime.now(timezone(timedelta(hours=7))).replace(tzinfo=None)
 
 class Prediksi(Base):
     __tablename__ = 'prediksi'
@@ -36,6 +41,6 @@ class Prediksi(Base):
     probabilitas = Column(Text, nullable=False)  # Simpan sebagai JSON string
     rekomendasi = Column(Text, nullable=False)  # Simpan sebagai JSON string
 
-    created_at = Column(DateTime, default=datetime.now)
+    created_at = Column(DateTime, default=get_wib_time)
     is_deleted = Column(Boolean, default=False)
     deleted_at = Column(DateTime, nullable=True)

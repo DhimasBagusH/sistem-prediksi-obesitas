@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+*.class
+*.so
+venv/
+env/
+.venv/
+.env
+
+# Streamlit secrets (JANGAN DI-UPLOAD)
+.streamlit/secrets.toml
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store

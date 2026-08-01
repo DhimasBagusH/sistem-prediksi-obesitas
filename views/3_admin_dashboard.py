@@ -3,10 +3,10 @@
 import streamlit as st
 import pandas as pd
 import json
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from database.db_connector import get_db
-from database.schema import Prediksi, to_wib
+from database.schema import Prediksi
 from utils.helpers import check_admin_login, get_risk_colors
 
 st.set_page_config(
@@ -122,7 +122,8 @@ if df.empty:
         'smoke', 'ch2o', 'scc', 'faf', 'tue', 'calc', 'mtrans'
     ])
 
-df['created_at'] = pd.to_datetime(df['created_at'], utc=True).apply(to_wib)
+# Konversi UTC → WIB (UTC+7) menggunakan pandas tz_convert agar .dt accessor tetap berfungsi
+df['created_at'] = pd.to_datetime(df['created_at'], utc=True).dt.tz_convert('Asia/Jakarta').dt.tz_localize(None)
 
 # ============================================
 # RINGKASAN
@@ -130,7 +131,8 @@ df['created_at'] = pd.to_datetime(df['created_at'], utc=True).apply(to_wib)
 st.markdown("### 📊 Statistik Prediksi")
 
 total = len(df)
-total_hari_ini = len(df[df['created_at'].dt.date == datetime.now().date()]) if not df.empty else 0
+today_wib = datetime.now(timezone(timedelta(hours=7))).date()
+total_hari_ini = len(df[df['created_at'].dt.date == today_wib]) if not df.empty else 0
 risk_counts = df['hasil_prediksi'].value_counts()
 top_risk = risk_counts.idxmax() if not risk_counts.empty else "-"
 
@@ -553,7 +555,7 @@ margin-top: 0.5rem;
             db = get_db()
             
             # Hapus permanen data yang sudah di-trash > 7 hari
-            tujuh_hari_lalu = datetime.now() - timedelta(days=7)
+            tujuh_hari_lalu = datetime.now(timezone.utc) - timedelta(days=7)
             db.query(Prediksi).filter(Prediksi.is_deleted == True, Prediksi.deleted_at < tujuh_hari_lalu).delete(synchronize_session=False)
             db.commit()
 
@@ -569,7 +571,8 @@ margin-top: 0.5rem;
                 del_format_map = {}
                 for p in deleted_data:
                     if p.deleted_at:
-                        sisa_hari = 7 - (datetime.now() - p.deleted_at).days
+                        deleted_at_utc = p.deleted_at if p.deleted_at.tzinfo else p.deleted_at.replace(tzinfo=timezone.utc)
+                        sisa_hari = 7 - (datetime.now(timezone.utc) - deleted_at_utc).days
                         sisa_hari = max(0, sisa_hari)
                         sisa_text = f" (Sisa {sisa_hari} hari)"
                     else:

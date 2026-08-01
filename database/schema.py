@@ -6,10 +6,16 @@ from datetime import datetime, timedelta, timezone
 
 Base = declarative_base()
 
-def get_wib_time():
-    # Mengambil waktu saat ini di zona waktu WIB (UTC+7)
-    # Menghapus tzinfo agar kompatibel (naive datetime) dengan SQLite
-    return datetime.now(timezone(timedelta(hours=7))).replace(tzinfo=None)
+WIB = timezone(timedelta(hours=7))
+
+def to_wib(dt):
+    """Konversi datetime UTC (naive atau aware) ke WIB (UTC+7) untuk ditampilkan."""
+    if dt is None:
+        return None
+    # Jika naive (tidak ada tzinfo), anggap sebagai UTC
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt.astimezone(WIB)
 
 class Prediksi(Base):
     __tablename__ = 'prediksi'
@@ -41,6 +47,7 @@ class Prediksi(Base):
     probabilitas = Column(Text, nullable=False)  # Simpan sebagai JSON string
     rekomendasi = Column(Text, nullable=False)  # Simpan sebagai JSON string
 
-    created_at = Column(DateTime, default=get_wib_time)
+    # Simpan dalam UTC, konversi ke WIB saat ditampilkan menggunakan to_wib()
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     is_deleted = Column(Boolean, default=False)
-    deleted_at = Column(DateTime, nullable=True)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)

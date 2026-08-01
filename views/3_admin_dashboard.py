@@ -6,7 +6,7 @@ import json
 from datetime import datetime, timedelta
 
 from database.db_connector import get_db
-from database.schema import Prediksi
+from database.schema import Prediksi, to_wib
 from utils.helpers import check_admin_login, get_risk_colors
 
 st.set_page_config(
@@ -122,7 +122,7 @@ if df.empty:
         'smoke', 'ch2o', 'scc', 'faf', 'tue', 'calc', 'mtrans'
     ])
 
-df['created_at'] = pd.to_datetime(df['created_at'])
+df['created_at'] = pd.to_datetime(df['created_at'], utc=True).apply(to_wib)
 
 # ============================================
 # RINGKASAN

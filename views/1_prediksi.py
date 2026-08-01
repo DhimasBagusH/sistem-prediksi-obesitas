@@ -3,7 +3,7 @@
 import streamlit as st
 import pandas as pd
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 
 # Import utility functions
 import sys
@@ -334,7 +334,7 @@ if submitted:
             hasil_prediksi=label,
             probabilitas=json.dumps(probabilitas.tolist()),
             rekomendasi=json.dumps(rekomendasi),
-            created_at=datetime.now()
+            created_at=datetime.now(timezone.utc)
         )
         db.add(prediksi_baru)
         db.commit()
